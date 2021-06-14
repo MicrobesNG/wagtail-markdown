@@ -17,6 +17,8 @@ import markdown
 from .mdx import linker, tables
 from .warnings import WagtailMarkdownDeprecationWarning
 
+from django.conf import settings
+
 
 def render_markdown(text, context=None):
     """
@@ -125,6 +127,14 @@ def _get_bleach_kwargs():
         'margin-left',
         'margin-right',
     ]
+    
+    if hasattr(settings, "WAGTAILMARKDOWN"):
+        if 'allowed_styles' in settings.WAGTAILMARKDOWN:
+            bleach_kwargs["styles"]=bleach_kwargs["styles"]+settings.WAGTAILMARKDOWN['allowed_styles']
+        if 'allowed_tags' in settings.WAGTAILMARKDOWN:
+            bleach_kwargs["tags"]=bleach_kwargs["tags"]+settings.WAGTAILMARKDOWN['allowed_tags']
+        if 'allowed_attributes' in settings.WAGTAILMARKDOWN:
+            bleach_kwargs["attributes"]={**bleach_kwargs["attributes"],**settings.WAGTAILMARKDOWN['allowed_attributes']}
     return bleach_kwargs
 
 
@@ -139,14 +149,30 @@ def _get_markdown_kwargs():
              'page:': 'wagtailmarkdown.mdx.linkers.page',
              'image:': 'wagtailmarkdown.mdx.linkers.image',
              'doc:': 'wagtailmarkdown.mdx.linkers.document',
-         })
+         }),
     ]
-    markdown_kwargs['extension_configs'] = {
-        'codehilite': [
-            ('guess_lang', False),
+
+    if hasattr(settings, "WAGTAILMARKDOWN_EXTENSIONS"):
+        markdown_kwargs["extensions"] += settings.WAGTAILMARKDOWN_EXTENSIONS
+    elif hasattr(settings, "WAGTAILMARKDOWN") and 'extensions' in settings.WAGTAILMARKDOWN:
+        markdown_kwargs["extensions"] += settings.WAGTAILMARKDOWN['extensions']
+
+    markdown_kwargs["extension_configs"] = {
+        "codehilite": [
+            ("guess_lang", False),
         ]
     }
-    markdown_kwargs['output_format'] = 'html5'
+
+    if hasattr(settings, "WAGTAILMARKDOWN_EXTENSIONS_CONFIG"):
+        markdown_kwargs["extension_configs"].update(
+            settings.WAGTAILMARKDOWN_EXTENSIONS_CONFIG
+        )
+    elif hasattr(settings, "WAGTAILMARKDOWN") and 'extensions_config' in settings.WAGTAILMARKDOWN:
+        markdown_kwargs["extension_configs"].update(
+            settings.WAGTAILMARKDOWN['extensions_config']
+        )
+
+    markdown_kwargs["output_format"] = "html5"
     return markdown_kwargs
 
 
