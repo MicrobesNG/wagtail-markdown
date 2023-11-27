@@ -16,6 +16,9 @@ try:  # wagtail < 2.0
 except ImportError:  # wagtail >= 2.0
     from wagtail.images import get_image_model
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 # TODO: Default spec and class should be configurable, because they're
 # dependent on how the project is set up.  Hard-coding of 'left',
@@ -28,6 +31,8 @@ class Linker(object):
 
         opts['spec'] = 'width-500'
         opts['classname'] = 'left'
+
+        logger.debug("OPTS: " + ", ".join(optstr))
 
         for opt in optstr:
             bits = opt.split('=', 1)

@@ -10,8 +10,11 @@
 import markdown
 from importlib import import_module
 
+import logging
+logger = logging.getLogger(__name__)
 
-LINKER_RE = r'<:([a-z]+:)?([^>|\n]+)((\|[^>|\n]+){0,})>'
+
+LINKER_RE = r'<:([a-z]+:)?([^>|~\n]+)(((\||~)[^>|~\n]+){0,})>'
 
 
 class LinkerPattern(markdown.inlinepatterns.Pattern):
@@ -22,14 +25,19 @@ class LinkerPattern(markdown.inlinepatterns.Pattern):
     def handleMatch(self, m):
         linktypes = self.linktypes
         opts = []
+
+        logger.debug(m.groups())
         if m.group(3) is not None and len(m.group(4)):
-            opts = m.group(4).split('|')[1:]
+            opts = m.group(4).split(m.group(6))[1:]
+
+        logger.debug("OPTS: " + ", ".join(opts))
 
         type = m.group(2)
         if type is None:
             type = '__default__'
         mod = import_module(linktypes[type])
         c = mod.Linker()
+
 
         return c.run(m.group(3), opts)
         return '[invalid link]'
